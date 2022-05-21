@@ -20,4 +20,4 @@ Configurable through its "config-file" argument, by default the conf. file will 
 Just the Python3 std libraries and that's it!
 
 ## Installation
-```pip install git+git://github.com/Pranprest/Bookitty/```
+Move it to anywhere on your $PATH variable or run `chmod +x ./install.sh && ./install.sh` on linux
