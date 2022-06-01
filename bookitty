@@ -3,24 +3,14 @@ from argparse import ArgumentParser, Namespace
 from os import name
 from typing import Final, NoReturn
 from pathlib import Path
-from enum import Enum, IntEnum
+from enum import IntEnum
 import sys
 import logging
 import toml
 
-class ExitCodes(IntEnum):
-	SUCCESS = 0
-	INTERNAL_ERR = 1
-	EXCEPTION = 130
-
 class LoggingLevel(IntEnum):
-	NOTSET = 0
-	DEBUG = 1
-	INFO = 2
-	WARNING = 3
-	ERROR = 4
-	CRITICAL = 5
-	LOGGING_OFFSET = 10
+	NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL = range(6)
+	LOGGING_OFFSET = 10 # "* 10" because of logging's inner workings
 
 # TODO: Make logs readable by the script itself (through an argument or smth)
 def _arg_Parser() -> ArgumentParser:
@@ -110,19 +100,15 @@ def main() -> NoReturn:
 	logging.basicConfig(filename=log_path, format=FORMAT, level=logging.NOTSET)
 
 	if ARGS.level in LoggingLevel.__members__:
-		 # "* 10" because of logging's inner workings
 		finalstr: str = ""
 		if ARGS.context != None: finalstr = " ".join(ARGS.context) + ': '
 		finalstr += " ".join(ARGS.message)
 		logging.log(msg=finalstr,
 					level=(LoggingLevel[ARGS.level].value * LoggingLevel.LOGGING_OFFSET))
-		sys.exit(ExitCodes.SUCCESS.value)
+		print(f"Successfully logged to logfile \n{finalstr}")
+		sys.exit()
 	else:
-		print(f"Level '{ARGS.level}' not found, valid levels are: ")
-		for element in LoggingLevel.__members__:
-			print(element, end=" ")
-		print(".")
-		sys.exit(ExitCodes.INTERNAL_ERR.value)
+		sys.exit(f"Level '{ARGS.level}' not found, valid levels are: " + " ".join(LoggingLevel.__members__) + ".")
 
 if __name__ == "__main__":
 	main()
