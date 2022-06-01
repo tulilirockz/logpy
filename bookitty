@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from os import name
-from types import SimpleNamespace
+from typing import Final
 from pathlib import Path
+from enum import Enum
+import sys
 import logging
+import toml
 
-# TODO: Add config file support
-# TODO: Make this an installable package
+class ExitCodes(Enum):
+	SUCCESS = 0
+	INTERNAL_ERR = 1
+	EXCEPTION = 130
+
 # TODO: Make logs readable by the script itself (through an argument or smth)
-# TODO: Less confusing code (idk functions for setting up config files[...])
-
 def _arg_Parser() -> ArgumentParser:
 	_parser = ArgumentParser(description="Logging for userspace programs", prog="Bookitty")
 
@@ -34,50 +38,74 @@ def _arg_Parser() -> ArgumentParser:
 	_parser.add_argument('--log-file',
 						type=str,
 						metavar="LOG_FILE",
-						default=f"{Path.home()}/.local/state/bookitty/logfile.log" if name == 'posix' else f"{Path.home()}\\.bookitty\\logfile.log",
 						help="The file where everything will be logged to")
 
 	_parser.add_argument('--config-file',
 						type=str,
 						metavar="CONF_FILE",
-						default=f"{Path.home()}/.config/bookitty/bookitty.conf" if name == 'posix' else f"{Path.home()}\\.bookitty\\bookitty.conf",
-						)
-
+						default=f"{Path.home()}/.config/bookitty/bookitty.conf" if name == 'posix' else f"{Path.home()}\\.bookitty\\bookitty.conf")
 	return _parser
 
-def _parse_args(args: SimpleNamespace):
-	# Setup config/log files
-	log_file_path = Path(args.log_file)
-	log_file_path.parents[0].mkdir(exist_ok=True)
-	log_file_path.touch(exist_ok=True)
+def _gen_cfg_file(cfg_path: Path) -> None:
+	if cfg_path.exists():
+		return 
+	
+	cfg_path.parents[0].mkdir(exist_ok=True)
+	cfg_path.touch(exist_ok=True)
 
-	conf_file_path = Path(args.config_file)
-	conf_file_path.parents[0].mkdir(exist_ok=True)
-	conf_file_path.touch(exist_ok=True)
+	default_cfg: Final[dict] = {
+		"bookitty_cfg": {
+			"Logging format": "[%(asctime)s] [%(levelname)s] - %(msg)s",
+			"Logfile Path": f"{Path.home()}/.local/state/bookitty/logfile.log" if name == 'posix' else f"{Path.home()}\\.bookitty\\logfile.log",
+			"Default logging level": "CRITICAL"
+		}
+	}
 
-	FORMAT="[%(asctime)s] [%(levelname)s] - %(msg)s"
-	logging.basicConfig(filename=log_file_path, format=FORMAT)
+	try:
+		with open(cfg_path, "w") as cfg_file:
+			toml.dump(default_cfg, cfg_file)
+			print("Wrote default config to ", cfg_path)
+	except OSError: 
+		print(f"Error while trying to write config to {cfg_path}")
+		sys.exit(ExitCodes.EXCEPTION.value)
 
-	# Handle logging iteself
-	LEVELS = ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-	args.level = args.level.upper()
-
-	if args.level in LEVELS:
-		finalstr = ""
-		if args.context != None:
-			finalstr = " ".join(args.context) + ': '
-		finalstr += " ".join(args.message)
-		logging.log(msg=finalstr,
-					level=(LEVELS.index(args.level) * 10))
-	else:
-		print(f"Level '{args.level}' not found, valid levels are: " + ", ".join(LEVELS) + ".")
-		exit(1)
+def _read_cfg_file(cfg_path: Path) -> dict:
+	if not cfg_path.exists():
+		_gen_cfg_file(cfg_path)
 		
+	try:
+		with open(cfg_path, "r") as cfg_file:
+			return toml.load(cfg_file)
+	except OSError:
+		print(f"File not found at {cfg_path}")
+		sys.exit(ExitCodes.EXCEPTION.value)
 
 def main() -> None:
-	args = _arg_Parser().parse_args()
-	_parse_args(args)
+	ARGS: Final[Namespace] = _arg_Parser().parse_args()
+	CFG: Final[dict] = _read_cfg_file(Path(ARGS.config_file))
+	FORMAT: Final[str] = CFG["bookitty_cfg"].get("Logging format", "[%(asctime)s] [%(levelname)s] - %(msg)s")
+	LEVELS: Final[list[str]] = ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+	ARGS.level = ARGS.level.upper()
 
+	if ARGS.log_file is None:
+		log_path = Path(CFG["bookitty_cfg"]["Logfile Path"])
+	else:
+		log_path = Path(ARGS.log_file)
+	log_path.parents[0].mkdir(exist_ok=True)
+	log_path.touch(exist_ok=True)
+	logging.basicConfig(filename=log_path, format=FORMAT, level=logging.NOTSET)
+
+	if ARGS.level in LEVELS:
+		finalstr: str = ""
+		if ARGS.context != None: finalstr = " ".join(ARGS.context) + ': '
+		finalstr += " ".join(ARGS.message)
+		LOGGING_OFFSET: Final[int] = 10 # "* 10" because of logging's inner workings
+		logging.log(msg=finalstr,
+					level=(LEVELS.index(ARGS.level) * LOGGING_OFFSET))
+		sys.exit(ExitCodes.SUCCESS.value)
+	else:
+		print(f"Level '{ARGS.level}' not found, valid levels are: " + ", ".join(LEVELS) + ".")
+		sys.exit(ExitCodes.INTERNAL_ERR.value)
 
 if __name__ == "__main__":
 	main()
