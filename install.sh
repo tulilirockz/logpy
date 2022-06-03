@@ -1,4 +1,4 @@
-# Installs "Bookitty"
+#!/bin/sh
 INSTALL_DIR=$HOME/.local/bin
 
-cp -f ./bookitty $INSTALL_DIR && echo "Bookitty was installed successfully in" $INSTALL_DIR
+cp -f ./loggy $INSTALL_DIR && echo "Bookitty was installed successfully in" $INSTALL_DIR

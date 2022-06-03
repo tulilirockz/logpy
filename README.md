@@ -1,4 +1,4 @@
-Bookitty
+Loggy
 =========
 
 Simple and quick logging for user applications and scripts.
@@ -6,7 +6,7 @@ Simple and quick logging for user applications and scripts.
 Can be used when, for example, you schedule a very lenghy task and you want to know whether or not it was successful or not, running it may help!
 
 ```sh
-very_lengthy_task && bookitty "Ran TASK successfully" -l INFO -c TASK  || bookitty "Failed running TASK" -l CRITICAL -c TASK
+very_lengthy_task && loggy "Ran TASK successfully" -l INFO -c TASK  || loggy "Failed running TASK" -l CRITICAL -c TASK
 ```
 
 - Compatible with Linux (tested on Ubuntu) and Windows (not tested yet.)
