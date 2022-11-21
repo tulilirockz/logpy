@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "loggy"
+version = "0.5.0"
+description = "Utility for logging events from user scripts and applications"
+authors = ["tuliliblossom <tulilirockz.pub@gmail.com>"]
+license = "BSD 2-Clause"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.scripts]
+loggy = "loggy:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pycodestyle]
+ignore = E501
+max-line-length = 160
