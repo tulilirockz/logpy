@@ -12,12 +12,11 @@ very_lengthy_task && loggy "Ran TASK successfully" -l INFO -c TASK  || loggy "Fa
 - Compatible with Linux (tested on Ubuntu) and Windows (not tested yet.)
 
 ## Configuration
+
 Configurable through its "config-file" argument, by default the conf. file will be at:
-- Windows: C:\\Users\\%USERNAME%\\.bookitty\\bookitty.conf
+- Windows: %APPDATA%\\Loggy\\loggy.conf
 - Linux: $XDG_CONFIG_HOME/bookitty/bookitty.conf
 
-## Dependencies
-Just the Python3 std libraries and that's it!
-
 ## Installation
-Move it to anywhere on your $PATH variable or run `chmod +x ./install.sh && ./install.sh` on linux
+
+Install it though poetry or copy it to a folder in your $PATH
